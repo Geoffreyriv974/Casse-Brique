@@ -1,0 +1,8 @@
+Base de donné pour le casse-brique:
+
+- Database : score;
+- TableName : score;
+- id , INT , Auto-Increment , PRIMARY-KEY;
+- name , VARCHAR , 255 , UNIQUE , NOT-NULL;
+- score , INT , NOT-NULL;
+- date_score , TIMESTAMP , DEFAULT CURRENT_TIMESTAMP;
