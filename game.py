@@ -1,20 +1,45 @@
 from tkinter import *
 from random import *
 import pygame
+import mysql.connector
 
 
-def write_to_file():
-    file_path = "tableau_scores.xlsx"
+connection = mysql.connector.connect(
+    host="localhost",
+    port=3306,
+    user='root',
+    password='root',
+    database='score'
+)
 
-    with open(file_path, "a") as file:
-        formatted_line = "{:<5} | {:<13} | {:<10}".format("1", name_player_get, appel_score_get)
-        file.write("\n" + formatted_line)
+
+def save_score():
+    try:
+        name = name_player_label.cget("text")
+        cursor = connection.cursor()
+        insert = "INSERT INTO score (name, score, date_score) VALUES (%s, %s, NOW());"
+        values = (name, new_score)
+        cursor.execute(insert, values)
+        connection.commit()
+        cursor.close()
+
+    except mysql.connector.errors.IntegrityError:
+        cursor = connection.cursor()
+        query = f"SELECT score, date_score FROM score WHERE name='{name}'"
+        cursor.execute(query)
+        result = cursor.fetchone()
+        if result:
+            old_score, old_date = result
+            if new_score > old_score:
+                cursor = connection.cursor()
+                update_query = f"UPDATE score SET score = {new_score}, date_score = NOW() WHERE name='{name}'"
+                cursor.execute(update_query)
+                connection.commit()
 
     btn_save.destroy()
 
 
 def game():
-
     global dessin, launch, balle1, dx, dy, brick1, vie_num, btnvie, tab_brick, tab_live_brick, numbrick, score, btn_save
     dessin = None
     int = Toplevel()
@@ -193,7 +218,7 @@ def game():
             dessin.move(platformbase, -20, 0)
 
     def loose():
-        global nb_score, btn_save, appel_score_get
+        global nb_score, btn_save, appel_score_get, new_score
 
         frame_loose = Frame(int, bg="white")
         frame_loose.pack()
@@ -215,10 +240,12 @@ def game():
 
         display_score_number.pack(side="right")
 
+        new_score = display_score_number.cget("text")
+
         btn_exit = Button(int, text="EXIT", bg="red", fg="white", command=exit_windows, relief="flat", borderwidth=0, font=("yellowstone", 20), width=10)
         btn_exit.pack(pady=10)
 
-        btn_save = Button(int, text="SAUVEGARDER LE SCORE", bg="green", fg="white", command=write_to_file, relief="flat", borderwidth=0, font=("yellowstone", 20), width=30)
+        btn_save = Button(int, text="SAUVEGARDER LE SCORE", bg="green", fg="white", command=save_score, relief="flat", borderwidth=0, font=("yellowstone", 20), width=30)
         btn_save.pack(pady=10)
 
     def enter_name():
